@@ -1,0 +1,20 @@
+road:
+  - Is the road made of asphalt, cobblestone, paving tiles or concrete? Respond with one or two words.: null
+  - Is the road wet? Yes or no?:
+      - "wet"
+      - "dry"
+  - Are there tram tracks? Yes or no?:
+      - "with tram tracks"
+      - ""
+  - Is the dirty? Yes or no?:
+      - "dirty"
+      - "clean"
+building:
+  - Are the buildings in the image apartments, shops, houses and/or some other type? List all that apply.: null
+  - List the main materials of the buildings in the image, from the options of brick, concrete, glass, stone and/or wood.: null
+  - List the main colors of the buildings in the image.: null
+car:
+  - List the colors of the cars in the image, from the options of black, white, silver, grey, red, blue, green, yellow.: null
+vegetation:
+  - Is the vegetation in the image dense or sparse?: null
+  - List which kinds of vegetation appear in the image.: null
