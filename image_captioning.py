@@ -5,13 +5,9 @@ import torch
 from tqdm import tqdm
 from lavis.models import load_model_and_preprocess
 
+from utils.file_listing import list_files
 from utils.data_processing import read_images, process_images, read_semantics
 from utils.miscellaneous import check_present_classes, process_yesno_result
-
-import importlib
-
-file_listing = importlib.import_module(
-    "realsim-24.utilities.data_utils.file_listing")
 
 
 def parse_args():
@@ -62,16 +58,11 @@ def parse_args():
         help=
         "Path to the file detailing which questions the model should answer for each class of interest."
     )
-    parser.add_argument("--label_config",
+    parser.add_argument("--semantics_config",
                         type=str,
                         default=None,
                         required=False,
-                        help="Path to label config.")
-    parser.add_argument("--label_mapping_config",
-                        type=str,
-                        default=None,
-                        required=False,
-                        help="Path to label mapping config.")
+                        help="Path to config with semantic label information for the dataset.")
     parser.add_argument(
         "--results_dir",
         required=True,
@@ -98,8 +89,11 @@ def main(args):
         device=device)
 
     # Listing file names using the dedicated function from realsim-24
-    image_path_list, _, semantics_path_list = file_listing.list_files(
-        args.data_dir, args.dataset_format, args.sets, None, True)
+    image_path_list, semantics_path_list = list_files(
+        args.data_dir, args.dataset_format, args.sets, True)
+
+    image_path_list=image_path_list[:10]
+    semantics_path_list=semantics_path_list[:10]
 
     # Loading image data
     print("Loading images...")
@@ -107,30 +101,16 @@ def main(args):
     image_list = process_images(image_list, vis_processors, device)
 
     # Load semantic data
-    if args.label_config:
+    if args.semantics_config:
         print("Loading semantic maps...")
         # Preparing label config
-        with open(args.label_config, 'r') as f:
+        with open(args.semantics_config, 'r') as f:
             label_name_info = yaml.load(f, Loader=yaml.SafeLoader)["labels"]
             label_name_info_inv = dict(
                 (v, k) for k, v in label_name_info.items())
 
-        # Preparing label mapping config
-        # NOTE Might want to re-utilize this code on both this and the realsim-24 repos
-        if args.label_mapping_config:
-            with open(args.label_mapping_config, 'r') as f:
-                map_info = yaml.load(f, Loader=yaml.SafeLoader)
-                map_field_name = f"learning_map_{os.path.splitext(os.path.basename(args.label_config))[0]}"
-                map_class_nums = (
-                    torch.Tensor(list(map_info[map_field_name].keys())).to(
-                        torch.int8),
-                    torch.Tensor(list(map_info[map_field_name].values())).to(
-                        torch.int8))
-        else:
-            map_class_nums = None
-
         # Loading semantic maps
-        semantics_list = read_semantics(semantics_path_list, map_class_nums)
+        semantics_list = read_semantics(semantics_path_list)
     else:
         semantics_list = [None] * len(image_list)
 
@@ -150,13 +130,12 @@ def main(args):
         image_prompt = ""
 
         # Check which classes actually show up in an image
-        if args.label_config:
+        if args.semantics_config:
             present_classes = check_present_classes(
                 semantics, question_prompts_info.keys(), label_name_info_inv)
         else:
             present_classes = question_prompts_info.keys()
 
-        # for i, class_name in enumerate(question_prompts_info.keys()):
         for i, class_name in enumerate(present_classes):
             image_prompt += class_name
             for question in question_prompts_info[class_name]:
