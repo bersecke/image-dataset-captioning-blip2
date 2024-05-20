@@ -21,7 +21,7 @@ def process_images(images, vis_processors, device):
     return processed_images
 
 
-def read_semantics(semantics_path_list, map_class_nums=None):
+def read_semantics(semantics_path_list):
     semantics_list = []
 
     for semantic_path in tqdm(semantics_path_list):
@@ -39,9 +39,6 @@ def read_semantics(semantics_path_list, map_class_nums=None):
             semantics = torch.from_numpy(semantics_np).unsqueeze(0)
         else:
             semantics = transforms.PILToTensor()(semantics)
-
-        if map_class_nums:
-            semantics = remap_classes(semantics, map_class_nums)
 
         semantics_list.append(semantics)
 
