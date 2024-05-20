@@ -5,3 +5,5 @@
 # Miscellaneous
 .vscode
 **/__pycache__/
+
+!caption_cityscapes.sh
